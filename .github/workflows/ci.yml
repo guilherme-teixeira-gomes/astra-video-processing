@@ -1,0 +1,57 @@
+name: CI - ASTRA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-service:
+    name: API Service - Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependências
+        run: npm ci
+      - name: Build (TypeScript)
+        run: npm run build
+      - name: Testes + cobertura
+        run: npm run test:coverage
+
+  processor-service:
+    name: Processor Service - Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/processor-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependências
+        run: npm ci
+      - name: Build (TypeScript)
+        run: npm run build
+      - name: Testes + cobertura
+        run: npm run test:coverage
+
+  docker-build:
+    name: Validar build das imagens Docker
+    runs-on: ubuntu-latest
+    needs: [api-service, processor-service]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build imagem API Service
+        run: docker build -t astra-api-service ./services/api-service
+      - name: Build imagem Processor Service
+        run: docker build -t astra-processor-service ./services/processor-service
+      - name: Build imagem Frontend
+        run: docker build -t astra-frontend ./frontend
