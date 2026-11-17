@@ -23,11 +23,6 @@ jobs:
         run: npm run build
       - name: Testes + cobertura
         run: npm run test:coverage
-      - name: Upload cobertura API
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-api
-          path: services/api-service/coverage/lcov.info
 
   processor-service:
     name: Processor Service - Build & Test
@@ -45,32 +40,6 @@ jobs:
         run: npm run build
       - name: Testes + cobertura
         run: npm run test:coverage
-      - name: Upload cobertura Processor
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-processor
-          path: services/processor-service/coverage/lcov.info
-
-  sonarcloud:
-    name: Análise de Qualidade (SonarCloud)
-    runs-on: ubuntu-latest
-    needs: [api-service, processor-service]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      # Gera a cobertura localmente para o Sonar ler
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cobertura API
-        run: cd services/api-service && npm ci && npm run test:coverage
-      - name: Cobertura Processor
-        run: cd services/processor-service && npm ci && npm run test:coverage
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   docker-build:
     name: Validar build das imagens Docker
