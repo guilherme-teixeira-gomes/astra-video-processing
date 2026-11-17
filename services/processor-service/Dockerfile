@@ -14,7 +14,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/newrelic.js ./
 RUN mkdir -p /data/uploads /data/outputs && chown -R appuser:appgroup /app /data
 USER appuser
 EXPOSE 3100
-CMD ["node", "dist/server.js"]
+CMD ["node", "-r", "newrelic", "dist/server.js"]
