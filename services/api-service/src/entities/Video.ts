@@ -1,0 +1,42 @@
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { User } from "./User";
+
+/**
+ * Representa um vídeo enviado para processamento.
+ * Status: RECEBIDO -> NA_FILA -> PROCESSANDO -> CONCLUIDO (ou ERRO)
+ */
+@Entity("videos")
+export class Video {
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @ManyToOne(() => User, (u) => u.videos, { onDelete: "CASCADE" })
+  user: User;
+
+  @Column({ type: "uuid" })
+  userId: string;
+
+  @Column({ type: "varchar", length: 255 })
+  originalName: string;
+
+  @Column({ type: "varchar", length: 500 })
+  storagePath: string;
+
+  @Column({ type: "varchar", length: 30, default: "RECEBIDO" })
+  status: string;
+
+  @Column({ type: "varchar", length: 500, nullable: true })
+  zipPath: string;
+
+  @Column({ type: "int", nullable: true })
+  frameCount: number;
+
+  @Column({ type: "text", nullable: true })
+  errorMessage: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}

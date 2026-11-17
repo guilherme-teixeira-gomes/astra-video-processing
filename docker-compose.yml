@@ -1,0 +1,107 @@
+# ASTRA - Ambiente local completo
+# Sobe: Postgres, Redis, RabbitMQ, API, Processor (escalável), Frontend, Prometheus, Grafana
+#
+# Uso:   docker compose up --build
+# Front: http://localhost:8080
+# API:   http://localhost:3000
+# RabbitMQ: http://localhost:15672 (guest/guest)
+# Grafana:  http://localhost:3001 (admin/admin)
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fiapx
+    ports: ["5442:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6389:6379"]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports: ["5682:5672", "15682:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-service:
+    build: ./services/api-service
+    ports: ["3000:3000"]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: fiapx
+      REDIS_HOST: redis
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      JWT_SECRET: fiapx-hackathon-secret
+      UPLOAD_DIR: /data/uploads
+      PORT: 3000
+    volumes: ["shared-data:/data"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_started }
+    restart: on-failure
+
+  processor-service:
+    build: ./services/processor-service
+    # Escala horizontal: suba N réplicas para processar N vídeos em paralelo
+    # docker compose up --scale processor-service=3
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: fiapx
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      OUTPUT_DIR: /data/outputs
+      # SMTP opcional para notificação de erro (deixe vazio = só loga)
+      SMTP_HOST: ""
+      PORT: 3100
+    volumes: ["shared-data:/data"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      api-service: { condition: service_started }
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    ports: ["8080:80"]
+    depends_on:
+      - api-service
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - api-service
+      - processor-service
+
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata:
+  shared-data:
