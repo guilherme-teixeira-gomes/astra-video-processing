@@ -46,8 +46,10 @@ services:
       DB_NAME: fiapx
       REDIS_HOST: redis
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
-      JWT_SECRET: fiapx-hackathon-secret
+      JWT_SECRET: astra-hackathon-secret
       UPLOAD_DIR: /data/uploads
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+      NEW_RELIC_APP_NAME: astra-api-service
       PORT: 3000
     volumes: ["shared-data:/data"]
     depends_on:
@@ -68,6 +70,8 @@ services:
       DB_NAME: fiapx
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       OUTPUT_DIR: /data/outputs
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY:-}
+      NEW_RELIC_APP_NAME: astra-processor-service
       # SMTP opcional para notificação de erro (deixe vazio = só loga)
       SMTP_HOST: ""
       PORT: 3100

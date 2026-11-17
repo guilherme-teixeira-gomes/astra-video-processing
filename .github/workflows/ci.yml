@@ -18,8 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Instalar dependências
-        run: npm ci
+      - run: npm ci
       - name: Build (TypeScript)
         run: npm run build
       - name: Testes + cobertura
@@ -36,8 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Instalar dependências
-        run: npm ci
+      - run: npm ci
       - name: Build (TypeScript)
         run: npm run build
       - name: Testes + cobertura
